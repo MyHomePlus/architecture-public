@@ -50,7 +50,8 @@
 ### 数据
 
 - 表归模块所有；migration 只改自己的表。
-- 主键 UUID；时间戳；需要时 `version`/`deleted_at`。
+- 主键 UUID；`created_at/updated_at`；业务表加 `version`；append-only 流水只保留 `created_at`，禁止 update/delete；软删用 `deleted_at`。
+- 写操作记录 actor（`actor_id` 或 `created_by/updated_by`）。
 - 业务数量用 `decimal`；单位单独存；不隐式换算。
 - 不手动改线上表；改结构用 migration。
 - 关键约束放 DB（`CheckConstraint` / unique），不只靠 Python。
@@ -165,7 +166,7 @@
 
 ## 7. 当前阶段（P1）
 
-- `home-core`：catalog + inventory 已完成；下一步最小 Web。
+- `home-core`：catalog + inventory 已完成；下一步最小 Web。P1 先用 PostgreSQL `public` schema，`home-ai` 上线前切 `core`。
 - `home-ai` / `home-web`：还没开始；不要提前写。
 - 公开版只同步脱敏后的架构、决策、规范；真实数据与私有笔记不进入本仓库。
 

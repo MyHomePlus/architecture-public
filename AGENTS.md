@@ -54,12 +54,12 @@
 
 ### 3.3 数据库
 
-- 一个 PostgreSQL，两个 schema：`core`、`ai`。
+- 一个 PostgreSQL，两个 schema：`core`、`ai`；P1 只有 home-core 时先用 `public`，home-ai 上线前切到 `core`。
 - 表前缀 = 模块名，例如 `catalog_item`、`inventory_stock_lot`、`intake_job`。
 - 迁移归模块自己；不要在别的模块迁移里改别人的表。
 - `core` 与 `ai` 之间只存 ID，不建外键、不 JOIN。
-- 所有表：`created_at / updated_at / version`；软删除用 `deleted_at`。
-- 写操作记录 `actor_id`；高风险写记录原因。
+- 所有表：`created_at / updated_at / version`；append-only 流水只保留 `created_at`，禁止 update/delete；软删除用 `deleted_at`。
+- 写操作记录 `actor_id`（或 `created_by/updated_by`）；高风险写记录原因。
 
 ### 3.4 写入
 
@@ -194,7 +194,7 @@ home-web/
 
 1. 先确定 owner 模块；只能在该模块的 `models.py` / migrations 里加。
 2. 表前缀 `<module>_`；不建跨模块外键。
-3. 加 `created_at / updated_at / version`；软删用 `deleted_at`。
+3. 加 `created_at / updated_at / version`（append-only 流水只加 `created_at`）；软删用 `deleted_at`。
 4. 评估是否含 PII；更新数据归属文档。
 5. 如果 reporting 需要 JOIN，只读视图/查询放 `reporting`，不要污染 domain。
 
@@ -231,9 +231,9 @@ home-web/
 - [ ] 模块边界未破：没有跨模块 `models` import / FK / JOIN（reporting 除外）。
 - [ ] 新增/修改表有迁移；只动自己的表。
 - [ ] 公开接口在 `contracts.py` / `services.py`，没有泄漏 ORM。
-- [ ] 写操作有 `actor_id`、幂等/版本策略；高风险写有确认。
+- [ ] 写操作有 actor（`actor_id` 或 `created_by/updated_by`）、幂等/版本策略；高风险写有确认。
 - [ ] 测试：模块单元 + 至少一个集成/契约测试。
-- [ ] `import-linter` / 模块边界检查通过；OpenAPI diff 无未声明的破坏性变更。
+- [ ] 模块边界检查通过（home-core 用 `tests/test_module_boundaries.py`；之后可换 import-linter）；OpenAPI diff 无未声明的破坏性变更。
 - [ ] 模块 `README.md` 更新（职责/表/公开接口/事件/依赖）。
 - [ ] OpenAPI / 生成 client 更新（如有 API 变更）。
 - [ ] `docs/01-overview.md` 或 `docs/02-modules.md` 更新（如有边界/数据变更）。
@@ -245,12 +245,12 @@ home-web/
 # home-core
 uv run pytest app/modules/<name>
 uv run ruff check .
-uv run mypy app
+# mypy/CI 在 P1 后接入；当前以 pytest + ruff + 边界测试为准
 
 # home-ai
 uv run pytest app/modules/<name>
 uv run ruff check .
-uv run mypy app
+# mypy/CI 在 P1 后接入；当前以 pytest + ruff + 边界测试为准
 
 # home-web
 pnpm lint
