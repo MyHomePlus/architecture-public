@@ -59,10 +59,10 @@
 | 主题 | 官方/规范 | 社区样板（候选） | 看什么 | 不抄什么 |
 |---|---|---|---|---|
 | OCR / 文档摄取 | — | [Paperless-ngx](https://github.com/paperless-ngx/paperless-ngx) | 上传、OCR、重试、文档元数据、任务状态 | 完整 DMS、复杂权限、超大索引 |
-| RAG | [LlamaIndex docs](https://docs.llamaindex.ai/)、[pgvector](https://github.com/pgvector/pgvector) | 现有 `rag-service` | 摄取、切分、混合检索、rerank、引用、评测 | 重型 Agent 平台、多租户、全自动知识图谱 |
+| RAG | [LlamaIndex docs](https://docs.llamaindex.ai/)、[pgvector](https://github.com/pgvector/pgvector) | 旧 `rag-service`（已归档） | 摄取、切分、混合检索、rerank、引用、评测 | 重型 Agent 平台、多租户、全自动知识图谱 |
 | Agent 入口 | **pi-agent 官方文档/仓库（待你提供链接）** | — | 意图/工具调用/结构化输出、pi-agent 的边界 | 把 pi-agent 当多步编排/审批平台 |
 | 多步编排（以后） | [LangGraph docs](https://langchain-ai.github.io/langgraph/) | — | state/checkpoint/interrupt/恢复 | 现在就上多 Agent/复杂审批 |
-| 评测 | LlamaIndex evaluation 文档 | `rag-service` 的评测 | golden set、Recall@K、引用/拒答 | 用“感觉不错”代替评测 |
+| 评测 | LlamaIndex evaluation 文档 | 旧 `rag-service` 的评测（已归档） | golden set、Recall@K、引用/拒答 | 用“感觉不错”代替评测 |
 
 ### 3.4 Web / 质量 / 安全 / 运维
 
