@@ -215,5 +215,6 @@
 - [`07-reference-index.md`](07-reference-index.md) — 官方/社区参考入口
 - [`08-existing-software.md`](08-existing-software.md) — 已有软件与融合方式
 - [`09-anti-overengineering.md`](09-anti-overengineering.md) — 复杂度预算与 AI coding 规则
+- [`11-development-standards.md`](11-development-standards.md) — 开发规范与 AI 限制
 - [`../AGENTS.md`](../AGENTS.md) — code agent 硬规则
 - [`../diagrams/`](../diagrams/) — PlantUML 架构图
