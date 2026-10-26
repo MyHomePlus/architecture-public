@@ -1,0 +1,78 @@
+@startuml
+!include includes/style.puml
+allow_mixing
+
+title 演进路线（v0.2 · 家庭 MVP）
+caption 先让家里用起来：库存 → 菜单 → 拍照 → 知识 → Agent；编排只在真实多步任务出现后加。
+
+rectangle "P0 地基\n3 仓库骨架\n模块模板 / shared kernel\nOpenAPI + Compose" as P0 <<service>>
+rectangle "P1 库存闭环\ncatalog · inventory + Web\nquick add / 低库存" as P1 <<service>>
+rectangle "P2 菜单闭环\nrecipe · meal_plan\n一周菜单 → 采购清单\ndaily digest（规则）" as P2 <<service>>
+rectangle "P3 拍照入库\nintake：图片 → 草稿\n→ 人工确认 → 库存" as P3 <<service>>
+rectangle "P4 知识单域\nknowledge：检索 / 引用\n/ 低置信拒答" as P4 <<readonly>>
+rectangle "P5 入口 Agent\npi-agent + tools\n查 / 记 / 简单操作" as P5 <<entry>>
+rectangle "P6 按需编排 + 加固\nLangGraph / DSH（仅真实多步）\n备份 / 认证 / 观测" as P6 <<agent>>
+
+P0 --> P1
+P1 --> P2
+P2 --> P3
+P3 --> P4
+P4 --> P5
+P5 --> P6
+
+note right of P1
+  **出口**
+  · 能记库存、查库存、看低库存
+  · quick add：新增一件不用走长表单
+  · 模块测试 + 备份恢复
+end note
+
+note right of P2
+  **出口**
+  · 能排一周菜单
+  · 能生成采购清单（合并同类项）
+  · 低库存/临期/菜单摘要（规则）
+  · 家人真的试用一次
+end note
+
+note right of P3
+  **出口**
+  · 一张小票/食材能入库
+  · 低置信可人工改
+  · 失败可重试，不重复写
+end note
+
+note right of P4
+  **出口**
+  · 一个领域真的有用
+  · 引用可追溯
+  · 低置信拒答
+end note
+
+note right of P5
+  **出口**
+  · 自然语言能查/记
+  · 写操作先确认
+  · 复杂任务能移交
+end note
+
+note right of P6
+  **出口**
+  · 第一个真实多步任务
+  · 中断 / 恢复 / 超时
+  · 失败可审计
+end note
+
+note bottom of P3
+  **先 P1 再 P2**
+  库存和菜单是家里每周都会用的闭环；
+  不要四个模块一起开。
+end note
+
+note bottom of P6
+  **不提前建**
+  没有真实多步任务时，不引入编排；
+  否则只是多一层空转。
+end note
+
+@enduml

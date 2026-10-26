@@ -1,0 +1,34 @@
+@startuml
+!include includes/style.puml
+allow_mixing
+
+title home-core · 模块依赖
+caption 模块化单体：模块拥有自己的表，只通过公开 contracts/services 或进程内事件交互。
+
+package "home-core（Django）" as CorePkg {
+  package "业务模块" {
+    component "catalog\n物品 · 分类 · 位置" as Cat <<service>>
+    component "inventory\n批次 · 流水 · 预警" as Inv <<service>>
+    component "recipe\n菜谱 · 食材" as Rec <<service>>
+    component "meal_plan\n菜单 · 采购清单" as Meal <<service>>
+    component "task\n待办 · 提醒\n独立模块" as Task <<service>>
+  }
+
+  component "shared kernel\nids · time · errors\nevents · actor（无业务规则）" as Shared <<infra>>
+  component "integration\n导入 / 导出 / Webhook\nadapter：只调 public service" as Int <<infra>>
+  component "reporting\n只读查询（可选）\n唯一允许跨模块读" as Rep <<infra>>
+}
+
+Inv --> Cat : item 查询
+Rec --> Cat : item 查询
+Meal --> Rec : 选菜谱
+Meal --> Inv : 可用量
+
+note bottom of CorePkg
+  **模块纪律**
+  · 只通过 contracts.py / services.py / 进程内事件交互
+  · 禁止 import 其他模块 models；禁止跨模块外键 / JOIN（reporting 只读除外）
+  · 不把 ORM 对象传过模块边界；跨模块只传 DTO / ID
+end note
+
+@enduml

@@ -1,0 +1,194 @@
+' ============================================================
+' MyHomePlus 架构图共享样式
+' 只放视觉约定，不放业务语义；所有 .puml 通过 !include 引用。
+' 颜色语义见 README「图例」。
+' ============================================================
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName "Noto Sans CJK SC"
+skinparam defaultFontSize 13
+skinparam titleFontSize 20
+skinparam captionFontSize 12
+skinparam roundcorner 10
+skinparam nodesep 38
+skinparam ranksep 42
+skinparam ArrowColor #475569
+skinparam ArrowFontColor #334155
+skinparam ArrowFontSize 11
+skinparam ArrowFontName "Noto Sans CJK SC"
+
+' ---- 通用元素 ----
+skinparam actor {
+  BackgroundColor #E2E8F0
+  BorderColor #334155
+  FontColor #0F172A
+}
+skinparam component {
+  BackgroundColor #F8FAFC
+  BorderColor #64748B
+  FontColor #0F172A
+}
+skinparam rectangle {
+  BackgroundColor #F8FAFC
+  BorderColor #94A3B8
+  FontColor #0F172A
+}
+skinparam database {
+  BackgroundColor #FEF3C7
+  BorderColor #B45309
+  FontColor #0F172A
+}
+skinparam queue {
+  BackgroundColor #FEF3C7
+  BorderColor #B45309
+  FontColor #0F172A
+}
+skinparam cloud {
+  BackgroundColor #F5F3FF
+  BorderColor #7E22CE
+  FontColor #0F172A
+}
+skinparam node {
+  BackgroundColor #F8FAFC
+  BorderColor #64748B
+  FontColor #0F172A
+}
+skinparam package {
+  BackgroundColor #F8FAFC
+  BorderColor #CBD5E1
+  FontColor #334155
+}
+skinparam folder {
+  BackgroundColor #F8FAFC
+  BorderColor #CBD5E1
+  FontColor #334155
+}
+skinparam class {
+  BackgroundColor #F8FAFC
+  BorderColor #64748B
+  FontColor #0F172A
+  ArrowColor #475569
+}
+skinparam state {
+  BackgroundColor #F8FAFC
+  BorderColor #64748B
+  FontColor #0F172A
+  ArrowColor #475569
+}
+
+' ---- 语义化 stereotype：服务 ----
+skinparam component<<service>> {
+  BackgroundColor #DBEAFE
+  BorderColor #1D4ED8
+  FontColor #0F172A
+}
+skinparam component<<capability>> {
+  BackgroundColor #CCFBF1
+  BorderColor #0F766E
+  FontColor #0F172A
+}
+skinparam component<<agent>> {
+  BackgroundColor #DCFCE7
+  BorderColor #15803D
+  FontColor #0F172A
+}
+skinparam component<<entry>> {
+  BackgroundColor #D1FAE5
+  BorderColor #047857
+  FontColor #0F172A
+}
+skinparam component<<infra>> {
+  BackgroundColor #E2E8F0
+  BorderColor #475569
+  FontColor #0F172A
+}
+skinparam component<<external>> {
+  BackgroundColor #F3E8FF
+  BorderColor #7E22CE
+  FontColor #0F172A
+}
+skinparam component<<readonly>> {
+  BackgroundColor #E0F2FE
+  BorderColor #0369A1
+  FontColor #0F172A
+}
+skinparam component<<danger>> {
+  BackgroundColor #FEE2E2
+  BorderColor #B91C1C
+  FontColor #0F172A
+}
+skinparam component<<approved>> {
+  BackgroundColor #DCFCE7
+  BorderColor #15803D
+  FontColor #0F172A
+}
+
+' ---- 语义化 stereotype：数据 ----
+skinparam database<<resource>> {
+  BackgroundColor #DBEAFE
+  BorderColor #1D4ED8
+}
+skinparam database<<intake>> {
+  BackgroundColor #FFEDD5
+  BorderColor #C2410C
+}
+skinparam database<<knowledge>> {
+  BackgroundColor #E0F2FE
+  BorderColor #0369A1
+}
+skinparam database<<agent>> {
+  BackgroundColor #DCFCE7
+  BorderColor #15803D
+}
+
+' ---- 语义化 stereotype：领域对象 ----
+skinparam class<<resource>> {
+  BackgroundColor #DBEAFE
+  BorderColor #1D4ED8
+}
+skinparam class<<intake>> {
+  BackgroundColor #FFEDD5
+  BorderColor #C2410C
+}
+skinparam class<<knowledge>> {
+  BackgroundColor #E0F2FE
+  BorderColor #0369A1
+}
+skinparam class<<agent>> {
+  BackgroundColor #DCFCE7
+  BorderColor #15803D
+}
+skinparam class<<cross>> {
+  BackgroundColor #F1F5F9
+  BorderColor #94A3B8
+  FontColor #475569
+}
+
+' ---- 时序图 ----
+skinparam sequence {
+  ArrowColor #475569
+  ArrowFontColor #334155
+  ArrowFontSize 11
+  LifeLineBorderColor #CBD5E1
+  LifeLineBackgroundColor #F8FAFC
+  ParticipantBackgroundColor #F8FAFC
+  ParticipantBorderColor #64748B
+  ParticipantFontColor #0F172A
+  ActorBackgroundColor #E2E8F0
+  ActorBorderColor #334155
+  GroupBackgroundColor #F1F5F9
+  GroupBorderColor #CBD5E1
+  NoteBackgroundColor #FEF9C3
+  NoteBorderColor #CA8A04
+  DividerBackgroundColor #E2E8F0
+  DividerBorderColor #94A3B8
+}
+
+' ---- 图注 ----
+skinparam legend {
+  BackgroundColor #F8FAFC
+  BorderColor #CBD5E1
+  FontColor #334155
+  FontSize 11
+}

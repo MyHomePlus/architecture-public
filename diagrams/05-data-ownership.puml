@@ -1,0 +1,54 @@
+@startuml
+!include includes/style.puml
+allow_mixing
+
+title 数据归属（v0.2）
+caption 单 PostgreSQL、两个 schema；模块用表前缀；跨服务/跨模块只存 ID，不做跨 schema JOIN。
+
+component "home-core\n模块化单体" as Core <<service>>
+component "home-ai\n模块化单体" as AI <<agent>>
+
+package "PostgreSQL（单实例）" {
+  database "core schema\ncatalog_* · inventory_*\nrecipe_* · meal_plan_*\ntask_* · audit_*" as CoreDB <<resource>>
+  database "ai schema\nintake_* · knowledge_*（vector）\nagent_* · jobs" as AIDB <<knowledge>>
+  CoreDB -[hidden]right-> AIDB
+}
+
+folder "本地磁盘\nuploads / knowledge" as Disk
+
+queue "Redis（可选）\n缓存 / 队列" as Redis
+database "MinIO（可选）\n对象存储" as MinIO
+
+Core --> CoreDB : 只写自己的表
+AI --> AIDB : 只写自己的表
+AI --> Disk : 原图 / 文档
+AI -.-> Redis : 需要时
+AI -.-> MinIO : 需要时
+
+note bottom of CoreDB
+  **模块内**
+  每个模块拥有自己的表前缀；
+  migrations 归模块自己。
+end note
+
+note bottom of AIDB
+  **AI 不是业务真相**
+  草稿/索引/会话可重建；
+  业务数据通过 core API 读。
+end note
+
+note bottom of Disk
+  **先本地，后对象存储**
+  单机够用；需要远程/多实例时再切 MinIO。
+  Redis 同理：先 jobs 表，后队列。
+end note
+
+legend right
+  |= 颜色 |= 含义 |
+  | <color:#DBEAFE>■</color> | core |
+  | <color:#DCFCE7>■</color> | ai |
+  | <color:#FEF3C7>■</color> | 数据 |
+  | <color:#E2E8F0>■</color> | 可选 |
+endlegend
+
+@enduml

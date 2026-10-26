@@ -1,0 +1,48 @@
+@startuml
+!include includes/style.puml
+allow_mixing
+
+title 一个模块长什么样（vertical slice）
+caption 新功能 = 新模块目录 + 注册一行；其他模块只依赖 public contracts/services。
+
+package "modules/<name>/" as Mod {
+  component "api.py\nHTTP / tool entry" as API <<service>>
+  component "contracts.py\nDTO + public interface" as Contracts <<infra>>
+  component "services.py\napplication service" as Services <<service>>
+  component "domain.py\npure logic" as Domain <<service>>
+  component "models.py\nown tables" as Models <<infra>>
+  component "events.py\nin-process events" as Events <<infra>>
+}
+
+component "composition root\nmain.py / registry" as Root <<infra>>
+component "其他模块" as Other <<service>>
+
+Root --> API : register
+API --> Services
+Services --> Domain
+Services --> Models
+Services --> Contracts
+Services --> Events
+Other --> Contracts : 只依赖 public
+Other -[#B91C1C,dashed]-> Models : 禁止 import
+
+note bottom of API
+  **模块自己的入口**
+  core: DRF router；ai: FastAPI router / tool；
+  只做参数校验和调用 services。
+end note
+
+note bottom of Contracts
+  **public 边界**
+  只放 DTO / 接口；
+  不暴露 ORM 对象。
+end note
+
+note bottom of Mod
+  **每个模块都要有**
+  README.md（职责/表/事件/依赖）
+  tests/（单元 + 模块集成）
+  migrations/（core）
+end note
+
+@enduml

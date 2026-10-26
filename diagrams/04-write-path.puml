@@ -1,0 +1,52 @@
+@startuml
+!include includes/style.puml
+allow_mixing
+
+title 写入路径（v0.2）
+caption 业务数据只有一个写入口；home-ai 只写自己的 ai schema，不直连 core schema。
+
+actor "家庭成员" as Human
+component "home-web" as Web <<service>>
+component "home-core API" as API <<approved>>
+database "core schema\n业务真相源" as CoreDB <<resource>>
+
+package "home-ai" as AIPkg {
+  component "agent\npi-agent" as Agent <<agent>>
+  component "intake\n草稿" as Intake <<service>>
+  component "knowledge\n只读知识" as Knowledge <<readonly>>
+  database "ai schema\nintake · knowledge · agent · jobs" as AIDB <<knowledge>>
+}
+
+component "禁止直连" as Forbidden <<danger>>
+
+Human --> Web : 操作
+Web --> API : 直接 CRUD
+AIPkg --> API : 读 / 草稿提交（统一经 API）
+API --> CoreDB : 唯一写入口
+AIPkg --> AIDB : 只写自己的 schema
+Forbidden -[#B91C1C,dashed]-> CoreDB : 禁止直连
+
+note right of API
+  **写操作**
+  低风险单步：单击确认；
+  高风险/批量/不可逆：显式确认 + diff。
+end note
+
+note bottom of AIDB
+  **AI 只写自己的 schema**
+  草稿、索引、会话不是业务真相；
+  跨服务只存 ID，不 JOIN。
+end note
+
+note bottom of Forbidden
+  Agent / Intake / Knowledge 都不得直连 core schema；
+  也不得跨 schema JOIN。
+end note
+
+legend right
+  |= 线型 |= 含义 |
+  | <color:#15803D>━━</color> | 允许写入 |
+  | <color:#B91C1C>╍╍</color> | 禁止 |
+endlegend
+
+@enduml

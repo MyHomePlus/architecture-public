@@ -1,0 +1,65 @@
+@startuml
+!include includes/style.puml
+allow_mixing
+
+title 部署（v0.2）
+caption 3 个应用容器 + 1 个 PostgreSQL；worker / Redis / MinIO / Caddy 都是按需增加。
+
+node "用户设备" {
+  component "浏览器 / 飞书客户端" as Client <<external>>
+}
+
+node "家庭服务器 / NAS（Docker Compose）" as Host {
+  package "应用容器" {
+    component "home-web\nNext.js" as Web <<service>>
+    component "home-core\nDjango" as Core <<service>>
+    component "home-ai\nFastAPI" as AI <<agent>>
+  }
+
+  package "数据" {
+    database "PostgreSQL\ncore + ai schema" as PG
+    folder "本地卷\nuploads / knowledge" as Disk
+    queue "Redis（可选）" as Redis
+    database "MinIO（可选）" as MinIO
+  }
+}
+
+cloud "外部（可选）" {
+  component "LLM / VLM API" as LLM <<external>>
+  component "飞书" as Feishu <<external>>
+}
+
+Client --> Web : 局域网 / 远程
+Web --> Core : REST
+Web --> AI : REST / SSE
+Core --> PG
+AI --> PG
+AI --> Disk
+AI --> LLM
+AI -.-> Redis : 需要队列时
+AI -.-> MinIO : 需要对象存储时
+AI -.-> Feishu : 通知 / 审批卡片
+
+note right of Host
+  **先简单**
+  · 只跑 web/core/ai + PG
+  · 长任务：用同一个 ai 镜像另起 worker 容器
+  · Redis / MinIO / Caddy 都是后加
+  · 远程用 VPN；需要 TLS/反代时再加 Caddy
+end note
+
+note bottom of PG
+  一个实例、两个 schema；
+  每个 schema 独立 dump。
+end note
+
+legend right
+  |= 颜色 |= 含义 |
+  | <color:#DBEAFE>■</color> | 业务/Web |
+  | <color:#DCFCE7>■</color> | AI |
+  | <color:#FEF3C7>■</color> | 数据 |
+  | <color:#E2E8F0>■</color> | 可选基础设施 |
+  | <color:#F3E8FF>■</color> | 外部 |
+endlegend
+
+@enduml

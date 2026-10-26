@@ -1,0 +1,61 @@
+@startuml
+!include includes/style.puml
+allow_mixing
+
+title MyHomePlus v0.2 · 总体架构
+caption 3 个部署单元；每个单元内部是模块化单体。先跑通闭环，再按模块拆分。
+
+actor "家庭成员" as Member
+actor "家庭管理员" as Admin
+
+component "home-web\nNext.js\n────────\n资源页面 · 菜谱/菜单\n识别草稿 · 对话/审批" as Web <<service>>
+
+component "home-core（Django）\n业务真相源\n────────\n资源：catalog · inventory · recipe\n计划：meal_plan · task\n外围：integration · admin\n共享：ids · errors · events" as Core <<service>>
+
+component "home-ai（FastAPI）\nAI 能力（模块化）\n────────\n感知：intake\n知识：knowledge\n智能体：tools · agent（pi-agent）\n平台：llm · storage · jobs" as AI <<agent>>
+
+database "PostgreSQL\ncore schema · ai schema" as PG
+folder "本地磁盘\nuploads / knowledge" as Disk
+
+cloud "外部（可选）" {
+  component "LLM / VLM API" as LLM <<external>>
+  component "飞书" as Feishu <<external>>
+}
+
+Member --> Web : 使用
+Admin --> Web : 管理 / 审批
+Web --> Core : REST
+Web --> AI : REST / SSE
+AI --> Core : 读 / 草稿提交（API）
+Core --> PG : core schema
+AI --> PG : ai schema
+AI --> Disk : 原图 / 文档
+AI --> LLM : 推理 / 识别 / 向量化
+AI -.-> Feishu : 通知 / 审批卡片（可选）
+
+note right of AI
+  **home-ai 先做模块化单体**
+  intake / knowledge / tools / agent 是模块，不是四个服务；
+  需要独立扩缩容时再拆。
+end note
+
+note bottom of Core
+  **home-core 的模块边界**
+  模块只通过 contracts.py / services.py 交互；
+  不跨模块 import models，不建跨模块外键。
+end note
+
+note bottom of PG
+  单实例、两个 schema；模块用表前缀。
+  初期不加 Redis / MinIO / Caddy；需要时再加。
+end note
+
+legend right
+  |= 颜色 |= 含义 |
+  | <color:#DBEAFE>■</color> | 业务/Web |
+  | <color:#DCFCE7>■</color> | AI |
+  | <color:#FEF3C7>■</color> | 数据 |
+  | <color:#F3E8FF>■</color> | 外部 |
+endlegend
+
+@enduml
