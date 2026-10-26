@@ -4,7 +4,7 @@
 >
 > 3 programs · 1 PostgreSQL · 1 business write path · modular monolith.
 
-**Status**: architecture v0.2 complete; implementation starts at P0. This is a design showcase, not a production deployment.
+**Status**: architecture v0.2; P1 implementation is underway (`home-core` + `home-web`). `home-ai` starts at P3. This is a design showcase, not a production deployment.
 
 ![Overall architecture](docs/images/01-overall.png)
 
