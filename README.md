@@ -77,6 +77,7 @@ Four domains do **not** mean four services. Intake / knowledge / agent start as 
 - [`docs/07-reference-index.md`](docs/07-reference-index.md) — official/community references
 - [`docs/08-existing-software.md`](docs/08-existing-software.md) — what to learn / reuse / avoid from existing tools
 - [`docs/09-anti-overengineering.md`](docs/09-anti-overengineering.md) — complexity budget and AI-coding rules
+- [`docs/11-development-standards.md`](docs/11-development-standards.md) — development workflow, AI limits, and completion rules
 - [`AGENTS.md`](AGENTS.md) — how a code agent should work inside these boundaries
 
 ## What is deliberately not here
