@@ -6,7 +6,7 @@
 
 **Status (2026-11)**: P2.4 kitchen web is working manually: recipes, weekly multi-dish meal plans, immutable meal records, and a dynamic shopping list. AI currently covers local OCR/ASR and structured intake drafts; the domain-assistant runtime is designed but not implemented. This is a working personal project and architecture showcase, not a production service.
 
-![Layered architecture](docs/images/00-layered-overview.png)
+![Layered architecture](docs/images/00-layered-overview.png?v=20261102)
 
 ## What changed
 
@@ -107,9 +107,9 @@ Known gaps are documented honestly: no auth/multi-tenant, no production observab
 | 09 | [Skill composition](diagrams/09-skill-composition.puml) | How does one skill cross the layers? |
 | 10 | [Weekly meal scenario](diagrams/10-scenario-weekly-menu.puml) | How does one real flow run end to end? |
 
-![Skill composition](docs/images/09-skill-composition.png)
+![Skill composition](docs/images/09-skill-composition.png?v=20261102)
 
-![Weekly meal scenario](docs/images/10-scenario-weekly-menu.png)
+![Weekly meal scenario](docs/images/10-scenario-weekly-menu.png?v=20261102)
 
 ## Documentation
 
