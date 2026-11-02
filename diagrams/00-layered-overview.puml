@@ -1,0 +1,100 @@
+@startuml
+!include includes/style.puml
+allow_mixing
+
+title MyHomePlus · 层叠式总体架构
+caption 领域助手各管自己的业务域；数据在底层共享，助手之间不互调、不共享上下文。
+
+skinparam packageStyle rectangle
+skinparam nodesep 20
+skinparam ranksep 20
+
+package "L5 · 领域助手｜Domain Assistants" as L5 {
+  component "库存助手\n拍照/语音入库 · 库存" as A1 <<entry>>
+  component "吃饭助手\n菜谱 · 一周菜单" as A2 <<entry>>
+  component "采购助手\n缺什么 · 采购清单" as A3 <<entry>>
+  component "提醒助手\n到期 · 低库存 · 日程" as A4 <<entry>>
+  A1 -[hidden]right-> A2
+  A2 -[hidden]right-> A3
+  A3 -[hidden]right-> A4
+}
+
+package "L4 · 生活技能｜Life Skills（每个技能只属于一个助手）" as L4 {
+  component "capture_inventory\n拍照/语音 → 入库草稿" as S1 <<agent>>
+  component "plan_week_menu\n菜谱 + 偏好 → 周菜单草稿" as S2 <<agent>>
+  component "replenish_shopping\n菜单/清单 → 采购草稿" as S3 <<agent>>
+  component "remind\n到期/低库存 → 提醒" as S4 <<agent>>
+  S1 -[hidden]right-> S2
+  S2 -[hidden]right-> S3
+  S3 -[hidden]right-> S4
+}
+
+package "L3 · 领域服务｜Domain Services（只读可互通，写只写自己）" as L3 {
+  component "库存 / 物品\ncatalog · inventory" as D1 <<service>>
+  component "菜谱 / 菜单\nrecipe · meal_plan" as D2 <<service>>
+  component "采购\nshopping" as D3 <<service>>
+  component "任务 / 提醒\ntask" as D4 <<service>>
+  D1 -[hidden]right-> D2
+  D2 -[hidden]right-> D3
+  D3 -[hidden]right-> D4
+}
+
+package "L2 · 原子能力｜Atomic Capabilities（全助手共享）" as L2 {
+  component "OCR / ASR\nperception" as C1 <<capability>>
+  component "LLM\n结构化/解释" as C2 <<capability>>
+  component "规则\n校验/约束" as C3 <<capability>>
+  component "调度\ncron / jobs" as C4 <<capability>>
+  component "通知\nWeb / 飞书" as C5 <<capability>>
+  C1 -[hidden]right-> C2
+  C2 -[hidden]right-> C3
+  C3 -[hidden]right-> C4
+  C4 -[hidden]right-> C5
+}
+
+package "L1 · 能力基座｜Platform（全助手共享）" as L1 {
+  component "home-core API\n业务真相源" as P1 <<service>>
+  component "home-ai runtime\n助手 + 技能" as P2 <<agent>>
+  database "PostgreSQL\ncore / ai schema" as P3 <<resource>>
+  folder "本地卷\n图片 / 文档" as P4 <<infra>>
+  component "jobs / worker\n重试 · 定时" as P5 <<infra>>
+  P1 -[hidden]right-> P2
+  P2 -[hidden]right-> P3
+  P3 -[hidden]right-> P4
+  P4 -[hidden]right-> P5
+}
+
+L5 -[hidden]down-> L4
+L4 -[hidden]down-> L3
+L3 -[hidden]down-> L2
+L2 -[hidden]down-> L1
+
+note right of L3
+  **数据可以互通，助手不能互调**
+  · 读：通过 L3 public read service 取共享数据
+  · 写：只写自己业务域，经 core API
+  · 不做 assistant → assistant 调用
+  · 不共享会话、上下文、工具白名单
+end note
+
+note bottom of L1
+  **逻辑分层，不是部署分层**
+  仍是 home-web + home-core + home-ai + 1 PostgreSQL；
+  四个助手是同一 home-ai 内的领域配置，不是四个服务。
+end note
+
+note bottom of L5
+  **渠道不是助手**
+  Web / 飞书 / 定时只是触达渠道；
+  首页可以聚合展示各助手卡片，但助手之间不互相感知。
+end note
+
+legend right
+  |= 层 |= 负责 |
+  | L5 | 领域助手，各管一域 |
+  | L4 | 技能，只编排本域 |
+  | L3 | 数据真相，读共享/写自己 |
+  | L2 | 全助手共享的原子能力 |
+  | L1 | 全助手共享的运行基座 |
+endlegend
+
+@enduml

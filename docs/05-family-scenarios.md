@@ -1,5 +1,7 @@
 # 05 · 家庭场景与 MVP
 
+> Current status (2026-11): inventory, recipes, weekly menu, meal records, and shopping list are working manually; assistant runtime and proactive reminders are next. See README and [`12-assistant-architecture.md`](12-assistant-architecture.md).
+
 > 这个项目首先是一个**自己家会真的用**的产品；架构是手段，不是目的。
 > 目标不是做企业平台，而是：一个人能维护、AI 能帮忙、家里用得上、以后还能长出新东西。
 

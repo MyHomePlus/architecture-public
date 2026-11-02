@@ -1,0 +1,59 @@
+@startuml
+!include includes/style.puml
+
+title 场景方案 · 一周吃饭（周日确认）
+caption 一条真实链路：规则优先、LLM 可选、先草稿、人确认、core 才写。
+
+actor "家庭成员" as User
+participant "Web Today / 定时\n触达渠道（不是助手）" as UI
+participant "吃饭助手\nL5 领域助手" as Assistant
+participant "plan_week_menu\nL4 技能（属于吃饭助手）" as Skill
+participant "recipe / meal_plan\nL3 领域服务" as Domain
+participant "rules / LLM\nL2 原子能力" as Cap
+database "assistant_action\n草稿 / 确认" as Action
+participant "core API\n唯一写入口" as Core
+database "PostgreSQL\nmeal_plan_record" as PG
+
+User -> UI : 周日打开 / 收到提醒
+UI -> Assistant : “下周吃什么？”
+Assistant -> Skill : 选择 plan_week_menu
+Skill -> Domain : 菜谱 + 最近吃过 + 本周状态
+Domain --> Skill : 结构化候选
+Skill -> Cap : 规则过滤（忌口/重复）\nLLM 只在需要时解释
+Cap --> Skill : 候选 2–3 个 / 修改建议
+Skill -> Action : 创建 proposed\n菜单草稿
+Action --> UI : 待确认卡片
+User -> UI : 确认 / 局部替换
+UI -> Action : confirm
+Action -> Core : 执行确认后的动作
+Core -> Domain : confirm_week
+Domain -> PG : 生成 meal_record
+PG --> UI : 完成结果
+Action --> UI : executed
+
+note over Cap
+  **不是所有步骤都进 LLM**
+  规则能判断的，先用规则；
+  LLM 只做解释/偏好收窄。
+end note
+
+note over Action
+  **确认前不写 core**
+  proposed 可以改、可以过期；
+  只执行一次，带 idempotency。
+end note
+
+note over PG
+  **计划 ≠ 实际摄入**
+  meal_record 记录来源与快照；
+  健康分析以后单独读取。
+end note
+
+note over UI
+  **不跨助手编排**
+  这条链路只属于吃饭助手；
+  采购助手之后自己读取菜单生成采购草稿，
+  不由吃饭助手调用采购助手。
+end note
+
+@enduml

@@ -1,0 +1,73 @@
+@startuml
+!include includes/style.puml
+allow_mixing
+
+title 技能组合切片 · 一个技能如何穿过各层
+caption 以 plan_week_menu 为例；其他技能形状相同，只是依赖不同。
+
+left to right direction
+skinparam nodesep 30
+skinparam ranksep 36
+
+actor "家庭成员" as User
+component "吃饭助手\n入口 / 上下文 / 工具白名单" as Assistant <<entry>>
+
+package "L4 · 生活技能" as SkillLayer {
+  component "plan_week_menu\n周菜单草稿" as Skill <<agent>>
+}
+
+package "L3 · 领域服务" as Domain {
+  component "recipe\n菜谱库" as Recipe <<service>>
+  component "meal_plan\n周菜单/记录" as MealPlan <<service>>
+}
+
+package "L2 · 原子能力" as Caps {
+  component "rules\n忌口 / 重复 / 时间" as Rules <<capability>>
+  component "llm\n偏好收窄 / 解释" as LLM <<capability>>
+}
+
+package "确认边界" as Actions {
+  database "assistant_action\nproposed → confirmed\n→ executed / expired" as Action <<agent>>
+  component "core API\n唯一业务写入口" as Core <<service>>
+}
+
+User --> Assistant : “下周吃什么？”
+Assistant --> Skill : 选择技能
+Skill --> Recipe : 读菜谱
+Skill --> MealPlan : 读最近记录
+Skill --> Rules : 规则过滤
+Skill -.-> LLM : 可选解释
+Skill --> Action : 创建 proposed
+Action --> Core : 确认后执行
+Core --> MealPlan : confirm_week
+
+note bottom of Action
+  **人确认前不写业务真相**
+  技能只产生草稿；
+  confirmed 才调用 core API；
+  同一 action 最多执行一次。
+end note
+
+note bottom of SkillLayer
+  **技能不拥有表**
+  技能只组合 public service；
+  领域服务拥有表与事务。
+end note
+
+note right of Domain
+  **其他助手/技能的形状**
+  capture_inventory = perception + inventory（库存助手）
+  plan_week_menu   = recipe + meal_plan + rules（吃饭助手）
+  replenish        = meal_plan + shopping + inventory（采购助手）
+  remind           = task + scheduler + notify（提醒助手）
+end note
+
+legend right
+  |= 颜色 |= 含义 |
+  | <color:#DCFCE7>■</color> | 助手 / 技能 |
+  | <color:#DBEAFE>■</color> | 领域服务 |
+  | <color:#CCFBF1>■</color> | 原子能力 |
+  | <color:#FEF3C7>■</color> | 待确认 / 数据 |
+endlegend
+
+@enduml

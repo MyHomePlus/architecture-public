@@ -2,77 +2,59 @@
 !include includes/style.puml
 allow_mixing
 
-title 演进路线（v0.2 · 家庭 MVP）
-caption 先让家里用起来：库存 → 菜单 → 拍照 → 知识 → Agent；编排只在真实多步任务出现后加。
+title 演进路线（v0.2 · 场景闭环）
+caption 先跑通生活场景，再长助手层；不按“模块数量”排期。
 
-rectangle "P0 地基\n3 仓库骨架\n模块模板 / shared kernel\nOpenAPI + Compose" as P0 <<service>>
-rectangle "P1 库存闭环\ncatalog · inventory + Web\nquick add / 低库存" as P1 <<service>>
-rectangle "P2 菜单闭环\nrecipe · meal_plan\n一周菜单 → 采购清单\ndaily digest（规则）" as P2 <<service>>
-rectangle "P3 拍照入库\nintake：图片 → 草稿\n→ 人工确认 → 库存" as P3 <<service>>
-rectangle "P4 知识单域\nknowledge：检索 / 引用\n/ 低置信拒答" as P4 <<readonly>>
-rectangle "P5 入口 Agent\npi-agent + tools\n查 / 记 / 简单操作" as P5 <<entry>>
-rectangle "P6 按需编排 + 加固\nLangGraph / DSH（仅真实多步）\n备份 / 认证 / 观测" as P6 <<agent>>
+rectangle "S1 一句话入库 / 库存\nP1 + P1.5\n✅ 已跑通\n5 图 + 5 语音" as S1 <<service>>
+rectangle "S2 一周吃饭\n菜谱 → 周菜单 → 确认\n✅ 手工版\n37 条旧菜谱" as S2 <<service>>
+rectangle "S3 采购 / 补货\n菜单/手工 → 采购清单\n✅ 手工版\n不碰库存" as S3 <<service>>
+rectangle "S4 家庭提醒\ntask + jobs + 通知\n⬜ 下一步\n到期/低库存/周日确认" as S4 <<service>>
+rectangle "S5 领域助手\n四域助手 + assistant_action\n🟡 设计完成\n薄 channel router" as S5 <<service>>
+rectangle "S6 知识 / 多步\n单域知识；真实多步才编排\n⬜ 以后\n不提前上 LangGraph" as S6 <<agent>>
 
-P0 --> P1
-P1 --> P2
-P2 --> P3
-P3 --> P4
-P4 --> P5
-P5 --> P6
+S1 --> S2
+S2 --> S3
+S3 --> S4
+S4 --> S5
+S5 --> S6
 
-note right of P1
+note right of S1
   **出口**
-  · 能记库存、查库存、看低库存
-  · quick add：新增一件不用走长表单
-  · 模块测试 + 备份恢复
-end note
-
-note right of P2
-  **出口**
-  · 能排一周菜单
-  · 能生成采购清单（合并同类项）
-  · 低库存/临期/菜单摘要（规则）
-  · 家人真的试用一次
-end note
-
-note right of P3
-  **出口**
-  · 一张小票/食材能入库
-  · 低置信可人工改
+  · 拍照/语音 → 草稿 → 确认 → 库存
   · 失败可重试，不重复写
 end note
 
-note right of P4
+note right of S2
   **出口**
-  · 一个领域真的有用
-  · 引用可追溯
-  · 低置信拒答
+  · 一餐多菜，草稿/确认
+  · meal_record 可被后续读取
+  · 37 条旧菜谱可查
 end note
 
-note right of P5
+note right of S3
   **出口**
-  · 自然语言能查/记
-  · 写操作先确认
-  · 复杂任务能移交
+  · 采购是动态清单
+  · 不从库存扣减
+  · 买完只勾选
 end note
 
-note right of P6
+note right of S4
   **出口**
-  · 第一个真实多步任务
-  · 中断 / 恢复 / 超时
-  · 失败可审计
+  · 主动提醒有真实触发
+  · 通知可关闭/降噪
 end note
 
-note bottom of P3
-  **先 P1 再 P2**
-  库存和菜单是家里每周都会用的闭环；
-  不要四个模块一起开。
+note right of S5
+  **出口**
+  · 四个助手各管一域
+  · 不互调；共享数据只读
+  · action 确认后写 core
 end note
 
-note bottom of P6
-  **不提前建**
-  没有真实多步任务时，不引入编排；
-  否则只是多一层空转。
+note bottom of S6
+  **门禁**
+  没有真实需求，不上多 Agent/编排/向量库；
+  不为“看起来智能”加层。
 end note
 
 @enduml

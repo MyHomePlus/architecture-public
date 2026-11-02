@@ -1,83 +1,127 @@
 # MyHomePlus Architecture
 
-> A family platform architecture built by **one person + AI**, designed to stay small enough to maintain and modular enough to grow.
+> **A lightweight AI life assistant — capabilities broad, permissions narrow, the final step stays human.**
 >
-> 3 programs · 1 PostgreSQL · 1 business write path · modular monolith.
+> One person + AI · 3 deployable programs · 1 PostgreSQL · 1 business write path · modular monolith.
 
-**Status**: architecture v0.2; P1 implementation is underway (`home-core` + `home-web`). `home-ai` starts at P3. This is a design showcase, not a production deployment.
+**Status (2026-11)**: P2.4 kitchen web is working manually: recipes, weekly multi-dish meal plans, immutable meal records, and a dynamic shopping list. AI currently covers local OCR/ASR and structured intake drafts; the domain-assistant runtime is designed but not implemented. This is a working personal project and architecture showcase, not a production service.
 
-![Overall architecture](docs/images/01-overall.png)
+![Layered architecture](docs/images/00-layered-overview.png)
 
-## What it is
+## What changed
 
-MyHomePlus covers four family capabilities:
+The project is no longer framed as a generic “smart home management platform”. It is a **lightweight AI life assistant** built from reusable capabilities and composable life skills.
 
-| Capability | What it answers | Program |
+```text
+L5  Domain assistants    Inventory · Meal · Shopping · Reminder
+L4  Life skills          Each skill belongs to exactly one assistant
+L3  Domain services      Shared reads; writes stay inside the owning domain
+L2  Atomic capabilities  OCR/ASR · LLM · rules · scheduler · notifications
+L1  Platform base        home-core · home-ai runtime · PostgreSQL · files · jobs
+```
+
+The layered view is a **composition view**, not a deployment view. The runtime is still 3 programs.
+
+## Four domain assistants
+
+| Assistant | Owns | Does not own |
 |---|---|---|
-| Resource | What do we have, where is it, what expires, what to eat | `home-core` (Django) |
-| Perception | What is in this photo/receipt/recipe | `home-ai` (FastAPI) |
-| Knowledge | Why / how / is this trustworthy | `home-ai` (FastAPI + LlamaIndex) |
-| Agent | Help me get this done | `home-ai` (pi-agent + tools) |
+| Inventory | capture, stock, locations | recipes, menus, shopping |
+| Meal | recipes, weekly meal plans, meal records | stock writes, shopping writes |
+| Shopping | dynamic purchase list | inventory deduction |
+| Reminder | tasks, due/low-stock reminders | domain data changes |
 
-`home-web` (Next.js) is the UI. The platform is designed for a single household, a home server, and Docker Compose—not for multi-tenant SaaS.
+Rules:
+
+- assistants **do not call each other**;
+- they do not share conversations, context, or tool allowlists;
+- they may read shared data through domain read contracts;
+- writes stay in the owning domain and go through the core API;
+- the home screen may aggregate cards from several assistants, but that is UI aggregation, not mutual awareness;
+- cross-domain actions are explicit user switches; no hidden orchestration.
+
+See [`docs/12-assistant-architecture.md`](docs/12-assistant-architecture.md).
 
 ## Why 3 programs
 
 ```text
-home-web
+home-web (Next.js)
    │ REST / SSE
    ├──────────────► home-core (Django, system of record)
-   └──────────────► home-ai   (FastAPI, AI modules)
+   └──────────────► home-ai   (FastAPI, perception + AI + assistants)
                          │
-                         └── read / draft commit via core API
+                         └── read / propose via core API
 ```
 
 - **`home-core`**: transactional CRUD, admin, data ownership. Business data has exactly one write path.
-- **`home-ai`**: intake, knowledge, tools, agent. It only writes its own schema; it cannot write `core` directly.
-- **`home-web`**: UI, approvals, draft review, generated API client.
+- **`home-ai`**: local perception, structured LLM output, future assistant/skill runtime. It only writes its own schema; it cannot write `core` directly.
+- **`home-web`**: assistant workspace, draft review, confirmations, management drill-downs.
 
-Four domains do **not** mean four services. Intake / knowledge / agent start as modules inside `home-ai`; they can be extracted later without rewriting their contracts.
+The four assistants are logical domains inside `home-ai`, **not four services**.
+
+## What is implemented
+
+| Area | Current state |
+|---|---|
+| Inventory | catalog, append-only movements, quick add, low stock, admin |
+| Intake | photo/voice → local OCR/ASR → DeepSeek JSON draft → human confirmation |
+| Recipes | title, servings, JSON ingredients/steps/tags; 37 legacy recipes imported |
+| Meal plans | one week per row, 1–7 days, multiple dishes per meal, draft/edit/confirm, immutable meal records |
+| Shopping | dynamic free-text list, manual add, done state, generate from a meal week; never touches inventory |
+| Web | `/kitchen` hub: weekly menu, recipes, shopping |
+
+Current numbers:
+
+- 3 deployable programs, 1 PostgreSQL;
+- 24 automated tests (core 15 / web 5 / ai 4);
+- 10 real intake samples (5 images + 5 voice);
+- 37 imported recipes / 249 ingredients;
+- 11 PlantUML diagrams.
+
+Known gaps are documented honestly: no auth/multi-tenant, no production observability, no assistant runtime yet, legacy recipes have no steps, and there is no reliable “cooked history” in the old data.
 
 ## Design principles
 
-1. **Modular monolith before microservices.** Modules are vertical slices; new features are new modules, not edits to existing domains.
+1. **Modular monolith before microservices.** Modules are vertical slices.
 2. **Single writer.** Business data is written only through `home-core` API; AI produces drafts and owns its own state.
-3. **Knowledge is read-only.** The RAG index is rebuildable and never the source of truth.
-4. **AI output is a draft.** Recognition/agent writes require confirmation; duplicate submissions are idempotent.
-5. **Contracts first.** Public module interfaces + OpenAPI + generated clients; no cross-module ORM leakage.
-6. **Boring infrastructure.** One PostgreSQL, two schemas, local disk; Redis/MinIO/Caddy only when a real need appears.
-7. **Small is a feature.** No API gateway, LLM gateway, event bus, Kubernetes, or multi-tenant layer at this stage.
+3. **Human confirmation is part of the product.** AI errors must not pollute the source of truth; repeated submissions are idempotent.
+4. **Capabilities are shared; assistants are isolated.** One OCR/LLM stack, four domain-scoped assistants.
+5. **Skills are not modules.** A skill composes domain services; only a persistent domain gets a module.
+6. **Contracts first.** Public module interfaces + OpenAPI + generated clients; no cross-module ORM leakage.
+7. **Boring infrastructure.** One PostgreSQL, two schemas, local disk; Redis/MinIO/Caddy only when a real need appears.
+8. **Small is a feature.** No API gateway, LLM gateway, event bus, Kubernetes, multi-agent runtime, or vector database at this stage.
 
 ## Diagrams
 
 | # | Diagram | Question |
 |---|---|---|
-| 01 | [Overall](diagrams/01-overall.puml) | What are the 3 programs and where do modules live? |
-| 02 | [home-core modules](diagrams/02-core-modules.puml) | How do resource modules depend on each other? |
-| 03 | [home-ai modules](diagrams/03-ai-modules.puml) | How do intake/knowledge/tools/agent stay decoupled? |
+| 00 | [Layered overview](diagrams/00-layered-overview.puml) | How do capabilities become skills and assistants? |
+| 01 | [System context](diagrams/01-overall.puml) | What are the 3 programs and where do modules live? |
+| 02 | [home-core modules](diagrams/02-core-modules.puml) | How do domain modules depend on each other? |
+| 03 | [home-ai modules](diagrams/03-ai-modules.puml) | How do assistants, skills, tools, and capabilities stay decoupled? |
 | 04 | [Write path](diagrams/04-write-path.puml) | Who can write, and what is forbidden? |
 | 05 | [Data ownership](diagrams/05-data-ownership.puml) | Which schema owns which tables? |
 | 06 | [Deployment](diagrams/06-deployment.puml) | What runs on the home server? |
 | 07 | [Module anatomy](diagrams/07-module-anatomy.puml) | What does a module look like? |
-| 08 | [Roadmap](diagrams/08-roadmap.puml) | What to build first, and what is deliberately later? |
+| 08 | [Roadmap](diagrams/08-roadmap.puml) | Which scenario loops come first? |
+| 09 | [Skill composition](diagrams/09-skill-composition.puml) | How does one skill cross the layers? |
+| 10 | [Weekly meal scenario](diagrams/10-scenario-weekly-menu.puml) | How does one real flow run end to end? |
 
-![Module boundaries](docs/images/02-core-modules.png)
+![Skill composition](docs/images/09-skill-composition.png)
 
-![Module anatomy](docs/images/07-module-anatomy.png)
+![Weekly meal scenario](docs/images/10-scenario-weekly-menu.png)
 
 ## Documentation
 
-- [`docs/00-glossary.md`](docs/00-glossary.md) — plain-language glossary (schema, API, DTO, RAG, idempotency…)
+- [`docs/00-glossary.md`](docs/00-glossary.md) — plain-language glossary
 - [`docs/01-overview.md`](docs/01-overview.md) — goals, constraints, modules, data ownership, contracts
 - [`docs/02-modules.md`](docs/02-modules.md) — module template, boundaries, growth playbook
 - [`docs/03-decisions.md`](docs/03-decisions.md) — key decisions and tradeoffs
-- [`docs/04-highlights.md`](docs/04-highlights.md) — design highlights: what was chosen and what it costs
-- [`docs/05-family-scenarios.md`](docs/05-family-scenarios.md) — real family scenarios and the MVP loop
-- [`docs/06-module-topics.md`](docs/06-module-topics.md) — module topic map and priorities
-- [`docs/07-reference-index.md`](docs/07-reference-index.md) — official/community references
-- [`docs/08-existing-software.md`](docs/08-existing-software.md) — what to learn / reuse / avoid from existing tools
-- [`docs/09-anti-overengineering.md`](docs/09-anti-overengineering.md) — complexity budget and AI-coding rules
-- [`docs/11-development-standards.md`](docs/11-development-standards.md) — development workflow, AI limits, and completion rules
+- [`docs/04-highlights.md`](docs/04-highlights.md) — design highlights
+- [`docs/05-family-scenarios.md`](docs/05-family-scenarios.md) — family scenarios and the MVP loop
+- [`docs/06-module-topics.md`](docs/06-module-topics.md) — module topic map
+- [`docs/11-development-standards.md`](docs/11-development-standards.md) — development workflow and AI limits
+- [`docs/12-assistant-architecture.md`](docs/12-assistant-architecture.md) — layered assistant model and boundaries
 - [`AGENTS.md`](AGENTS.md) — how a code agent should work inside these boundaries
 
 ## What is deliberately not here
@@ -85,10 +129,11 @@ Four domains do **not** mean four services. Intake / knowledge / agent start as 
 - Multi-tenant SaaS, billing, public registration
 - RBAC/OIDC/JWT/user tables (Phase 1: LAN/VPN + shared token)
 - Kubernetes, service mesh, event bus, API/LLM gateway
+- Multi-agent orchestration or autonomous execution
 - Formal approval workflow, SLA, on-call, large observability stack
 - A second full application (Mealie/Tandoor/Grocy) as a runtime dependency
 
-These are current-scope decisions, not claims that they are impossible. The cost/benefit and the upgrade triggers are documented in [`docs/03-decisions.md`](docs/03-decisions.md).
+These are current-scope decisions, not claims that they are impossible. Costs and upgrade triggers are documented in [`docs/03-decisions.md`](docs/03-decisions.md).
 
 ## Render
 

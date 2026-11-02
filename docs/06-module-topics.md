@@ -1,5 +1,7 @@
 # 06 · 模块 topic 地图与开发方向
 
+> Historical topic map. For the current v0.2 status, see `README.md` and `12-assistant-architecture.md`; the current roadmap is scenario-based (S1–S6).
+
 > 没有产品经理给我们出需求，就自己从家庭生活里“生成需求”。
 > 这不是拍脑袋：用频率、痛点、数据、AI 价值、成本、依赖来筛；先做闭环，不做功能点。
 > 参考入口见 [`07-reference-index.md`](07-reference-index.md)；已有软件见 [`08-existing-software.md`](08-existing-software.md)；家庭场景见 [`05-family-scenarios.md`](05-family-scenarios.md)。

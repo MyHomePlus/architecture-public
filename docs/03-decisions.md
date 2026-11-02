@@ -253,3 +253,31 @@ AI 有写能力（建待办、调库存、提交识别结果），最容易出�
 - 需要公网访问 → 加 Caddy/VPN + 更强的认证。
 
 > 这些是“以后可以加”，不是“现在必须做”。
+
+
+---
+
+## D9 · Layered narrative, isolated domain assistants
+
+### Background
+
+The original diagrams were complete but scattered across deployment, modules, data ownership, and write-path views. The project is now positioned as a lightweight AI life assistant, so the architecture needs one narrative: capabilities → atomic capabilities → domain services → life skills → domain assistants.
+
+### Decision
+
+- Use a five-layer composition view as the primary narrative.
+- Keep domain assistants isolated: inventory / meal / shopping / reminder. They do not call each other and do not share context or tool allowlists.
+- Share data through domain read contracts; writes stay inside the owning domain and go through the core API.
+- A thin channel router may route an entry to one assistant, but must not reason across domains.
+- Skills are versioned workflows owned by one assistant; they do not own tables.
+- Keep module, write-path, data-ownership, and deployment diagrams as supporting engineering views.
+
+### Consequences
+
+Positive: clear ownership, smaller context, safer tools, easier explanation.
+
+Negative: some cross-domain requests need explicit user switches; shared read contracts must be designed; the layered view can hide runtime/data boundaries if used alone.
+
+### When to revisit
+
+Only when a real workflow requires cross-domain coordination; then introduce an explicit domain workflow, not assistant-to-assistant chatter.

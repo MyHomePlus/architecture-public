@@ -122,3 +122,10 @@ pgvector 是 PostgreSQL 的向量扩展。
 ---
 
 > 还有不懂的词，直接加到这张表；不要让术语变成门槛。
+
+
+## Domain assistant / Skill
+
+Domain assistant: a user-facing assistant scoped to one business domain (inventory, meal, shopping, reminder). It does not call other assistants.
+
+Skill: a versioned life workflow that composes domain services and capabilities. A skill belongs to one assistant and owns no tables.

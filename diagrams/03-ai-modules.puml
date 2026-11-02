@@ -2,40 +2,63 @@
 !include includes/style.puml
 allow_mixing
 
-title home-ai · 模块依赖
-caption AI 能力模块化单体：agent 只通过 tools 访问业务能力；platform 不依赖业务模块。
+title home-ai · 领域助手、技能与能力
+caption 目标结构：每个助手只拥有本域技能；助手之间不互调；能力基座共享。
 
 package "home-ai（FastAPI）" as AIPkg {
-  package "业务模块" {
-    component "agent\npi-agent 入口\n会话 · 意图 · 路由\n（只经 tools 访问业务）" as Agent <<agent>>
-    component "tools\n工具注册表\n唯一桥：agent → 业务能力" as Tools <<agent>>
-    component "intake\n上传 · 识别 · 草稿" as Intake <<service>>
-    component "knowledge\n摄取 · 检索 · 引用" as Knowledge <<readonly>>
+  package "领域助手（目标）" {
+    component "库存助手\ninventory" as A1 <<entry>>
+    component "吃饭助手\nmeal" as A2 <<entry>>
+    component "采购助手\nshopping" as A3 <<entry>>
+    component "提醒助手\nreminder" as A4 <<entry>>
+    A1 -[hidden]right-> A2
+    A2 -[hidden]right-> A3
+    A3 -[hidden]right-> A4
   }
 
-  component "platform\nllm · storage · jobs\n（不依赖业务模块）" as Platform <<infra>>
+  package "生活技能（每个只属于一个助手）" {
+    component "capture_inventory" as S1 <<agent>>
+    component "plan_week_menu" as S2 <<agent>>
+    component "replenish_shopping" as S3 <<agent>>
+    component "remind" as S4 <<agent>>
+    S1 -[hidden]right-> S2
+    S2 -[hidden]right-> S3
+    S3 -[hidden]right-> S4
+  }
+
+  component "tools\n唯一业务桥\n白名单 / 风险 / 幂等" as Tools <<agent>>
+  component "intake\n当前输入适配\n上传 · OCR/ASR · 草稿" as Intake <<service>>
+  component "knowledge\n单域检索（以后）" as Knowledge <<readonly>>
+  component "platform\nperception · llm · storage · jobs · notify" as Platform <<infra>>
   component "core_client\nhome-core API 客户端" as CoreClient <<infra>>
 }
 
-component "home-core API" as CoreAPI <<service>>
+component "home-core API\n业务真相源" as CoreAPI <<service>>
 
-Agent --> Tools : 唯一入口
-Tools --> Intake : public service
-Tools --> Knowledge : public service
-Tools --> CoreClient : 资源 / 任务
-Intake --> Platform : llm / storage / jobs
-Knowledge --> Platform : llm / storage / jobs
-Agent --> Platform : llm / jobs
-Intake --> CoreClient : 读 / 提交
-Knowledge --> CoreClient : 只读投影
+A1 --> S1
+A2 --> S2
+A3 --> S3
+A4 --> S4
+S1 --> Tools
+S2 --> Tools
+S3 --> Tools
+S4 --> Tools
+Tools --> CoreClient : 读 / 提案
+Tools --> Intake : 当前感知
+Tools --> Knowledge : 以后
+Intake --> Platform
+Knowledge --> Platform
+S2 --> Platform : llm 可选
+S3 --> Platform : rules / jobs
+S4 --> Platform : scheduler / notify
 CoreClient --> CoreAPI : HTTP
 
 note bottom of AIPkg
-  **模块纪律**
-  · agent 不直接 import intake / knowledge；只能通过 tools
-  · 业务模块各自有 contracts + services + tests；不共享 ORM
-  · platform 只提供 llm/storage/jobs，不依赖业务模块
-  · 未来编排（LangGraph/DSH）作为新模块加入，不改 tools / 业务模块
+  **边界**
+  · 助手之间没有箭头：不互调、不共享会话/上下文/工具白名单
+  · 跨域数据通过 core public read service 获取；写只写自己业务域
+  · tools 是唯一业务桥；AI 只提案，确认后经 core API 执行
+  · 当前实际代码只有 intake + platform/perception；助手/skills 是目标层
 end note
 
 @enduml
